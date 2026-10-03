@@ -9,32 +9,37 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class SensorValuesPollService {
     private final RestTemplate restTemplate;
+    private final SensorValuesResponseParser sensorValuesResponseParser;
     private final SensorValuesRepository sensorValuesRepository;
     private final SensorValuesSocketIoService sensorValuesSocketIoService;
     private final String sensorValuesUrl;
 
-    // change constructor
     public SensorValuesPollService(
             RestTemplate restTemplate,
+            SensorValuesResponseParser sensorValuesResponseParser,
             SensorValuesRepository sensorValuesRepository,
             SensorValuesSocketIoService sensorValuesSocketIoService,
             @Value("${sensor.values.url}") String sensorValuesUrl) {
         this.restTemplate = restTemplate;
+        this.sensorValuesResponseParser = sensorValuesResponseParser;
         this.sensorValuesRepository = sensorValuesRepository;
         this.sensorValuesSocketIoService = sensorValuesSocketIoService;
         this.sensorValuesUrl = sensorValuesUrl;
     }
 
     public SensorValues getSensorValues() {
-        // TODO implement if endpoint return NaN values, return null or throw exception
-        return restTemplate.getForObject(sensorValuesUrl, SensorValues.class);
+        String response = restTemplate.getForObject(sensorValuesUrl, String.class);
+        if (response == null || response.isBlank()) {
+            throw new IllegalStateException("Sensor endpoint returned an empty response");
+        }
+
+        return sensorValuesResponseParser.parse(response).orElse(null);
     }
 
     public SensorValues pollAndSave() {
         SensorValues sensorValues = getSensorValues();
-
         if (sensorValues == null) {
-            throw new IllegalStateException("Sensor endpoint returned an empty response");
+            return null;
         }
 
         return sensorValuesRepository.save(sensorValues);
@@ -43,7 +48,7 @@ public class SensorValuesPollService {
     public SensorValues pollAndBroadcast() {
         SensorValues sensorValues = getSensorValues();
         if (sensorValues == null) {
-            throw new IllegalStateException("Sensor endpoint returned an empty response");
+            return null;
         }
 
         sensorValuesSocketIoService.broadcast(sensorValues);
