@@ -29,7 +29,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
 
   backend:
-    build: .
+    image: "${DOCKER_HUB_USER_NAME:?Set DOCKER_HUB_USER_NAME in .env}/watchtemp:backend-latest"
     restart: always
     depends_on:
       db:

@@ -1,4 +1,5 @@
-FROM maven:3.9-eclipse-temurin-25 AS build
+ARG BUILDPLATFORM
+FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-25 AS build
 
 WORKDIR /workspace
 COPY pom.xml .
