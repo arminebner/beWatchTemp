@@ -30,16 +30,23 @@ public class SensorValuesResponseParser {
 
         SensorValues sensorValues = objectMapper.readValue(response, SensorValues.class);
         if (sensorValues == null
-                || !isFinite(sensorValues.getTemperature())
-                || !isFinite(sensorValues.getHumidity())) {
+                || isInvalidMeasurement(sensorValues.getTemperature())
+                || isInvalidMeasurement(sensorValues.getHumidity())) {
             LOGGER.warn("Ignoring sensor response with missing or non-finite measurements");
             return Optional.empty();
+        }
+
+        String deviceName = sensorValues.getDeviceName();
+        if ("Sensor_1".equals(deviceName)) {
+            sensorValues.setHumidity(sensorValues.getHumidity() - 4.0);
+        } else if ("Sensor_2".equals(deviceName)) {
+            sensorValues.setHumidity(sensorValues.getHumidity() + 1.5);
         }
 
         return Optional.of(sensorValues);
     }
 
-    private static boolean isFinite(Double value) {
-        return value != null && Double.isFinite(value);
+    private static boolean isInvalidMeasurement(Double value) {
+        return value == null || !Double.isFinite(value);
     }
 }

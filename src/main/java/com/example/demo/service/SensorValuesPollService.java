@@ -12,23 +12,26 @@ public class SensorValuesPollService {
     private final SensorValuesResponseParser sensorValuesResponseParser;
     private final SensorValuesRepository sensorValuesRepository;
     private final SensorValuesSocketIoService sensorValuesSocketIoService;
-    private final String sensorValuesUrl;
+    private final String sensor1Url;
+    private final String sensor2Url;
 
     public SensorValuesPollService(
             RestTemplate restTemplate,
             SensorValuesResponseParser sensorValuesResponseParser,
             SensorValuesRepository sensorValuesRepository,
             SensorValuesSocketIoService sensorValuesSocketIoService,
-            @Value("${sensor.values.url}") String sensorValuesUrl) {
+            @Value("${sensor.values.sensor1.url}") String sensor1Url,
+            @Value("${sensor.values.sensor2.url}") String sensor2Url) {
         this.restTemplate = restTemplate;
         this.sensorValuesResponseParser = sensorValuesResponseParser;
         this.sensorValuesRepository = sensorValuesRepository;
         this.sensorValuesSocketIoService = sensorValuesSocketIoService;
-        this.sensorValuesUrl = sensorValuesUrl;
+        this.sensor1Url = sensor1Url;
+        this.sensor2Url = sensor2Url;
     }
 
-    public SensorValues getSensorValues() {
-        String response = restTemplate.getForObject(sensorValuesUrl, String.class);
+    public SensorValues getSensorValues(String sensorUrl) {
+        String response = restTemplate.getForObject(sensorUrl, String.class);
         if (response == null || response.isBlank()) {
             throw new IllegalStateException("Sensor endpoint returned an empty response");
         }
@@ -36,8 +39,8 @@ public class SensorValuesPollService {
         return sensorValuesResponseParser.parse(response).orElse(null);
     }
 
-    public SensorValues pollAndSave() {
-        SensorValues sensorValues = getSensorValues();
+    public SensorValues pollAndSaveSensor1() {
+        SensorValues sensorValues = getSensorValues(sensor1Url);
         if (sensorValues == null) {
             return null;
         }
@@ -45,8 +48,28 @@ public class SensorValuesPollService {
         return sensorValuesRepository.save(sensorValues);
     }
 
-    public SensorValues pollAndBroadcast() {
-        SensorValues sensorValues = getSensorValues();
+    public SensorValues pollAndBroadcastSensor1() {
+        SensorValues sensorValues = getSensorValues(sensor1Url);
+        if (sensorValues == null) {
+            return null;
+        }
+
+        sensorValuesSocketIoService.broadcast(sensorValues);
+
+        return sensorValues;
+    }
+
+    public SensorValues pollAndSaveSensor2() {
+        SensorValues sensorValues = getSensorValues(sensor2Url);
+        if (sensorValues == null) {
+            return null;
+        }
+
+        return sensorValuesRepository.save(sensorValues);
+    }
+
+    public SensorValues pollAndBroadcastSensor2() {
+        SensorValues sensorValues = getSensorValues(sensor2Url);
         if (sensorValues == null) {
             return null;
         }
