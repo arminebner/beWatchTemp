@@ -22,4 +22,8 @@ public class SensorValuesDataService {
     public SensorValuesAverage getAverageValuesByTimeRange(String deviceName, Instant startDate, Instant endDate) {
         return sensorValuesRepository.findAverageValuesByDeviceNameAndTimeRange(deviceName, startDate, endDate);
     }
+
+    public List<SensorValues> getAllSensorValuesByCurrentDate(Instant startDate, Instant endDate) {
+        return sensorValuesRepository.findAllByTimestampGreaterThanEqualAndTimestampLessThan(startDate, endDate);
+    }
 }

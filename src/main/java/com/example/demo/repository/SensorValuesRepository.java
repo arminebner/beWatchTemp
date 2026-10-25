@@ -13,6 +13,8 @@ public interface SensorValuesRepository extends JpaRepository<SensorValues, Long
 
     public List<SensorValues> findAllByDeviceName(String deviceName);
 
+    public List<SensorValues> findAllByTimestampGreaterThanEqualAndTimestampLessThan(Instant startDate, Instant endDate);
+
     @Query("""
             SELECT new com.example.demo.dto.SensorValuesAverage(
                 AVG(sv.temperature),
